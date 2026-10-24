@@ -1,0 +1,42 @@
+description: Improving "How to Trust AI" – PRD generation
+prompts:
+  - file://trust-ai/simple.prompt.md
+defaultTest:
+  options:
+    provider: Devin SWE-1.6
+providers:
+  - id: 'exec: node ./devin.js'
+    label: Devin SWE-1.6
+    config:
+      model: SWE-1.6
+tests:
+  - description: Pomodoro app chime customization - deterministic eval
+    vars:
+      request: I want to extend an existing pomodoro app to ring with a customizable chime when the timer expires, and be able to change the chimes for the completion of a pomodoro, completion of rest, and indication when it is time for a long break.
+    assert:
+      - type: icontains
+        value: pomodoro
+      - type: icontains
+        value: requirement
+      - type: icontains
+        value: custom
+  - description: PRD Generation - rubric with per-dimension scoring
+    vars:
+      request: I want to extend an existing pomodoro app to ring with a customizable chime when the timer expires, and be able to change the chimes for the completion of a pomodoro, completion of rest, and indication when it is time for a long break.
+    assert:
+      - type: llm-rubric
+        value: The result PRD should be in plain language that a non-expert can understand
+        threshold: 0.7
+        weight: 1.5
+        metric: clarity
+      - type: llm-rubric
+        value: The result PRD should include functional requirements, covering the core functionality and user interactions
+        threshold: 0.7
+        weight: 2
+        metric: functional-requirements
+      - type: llm-rubric
+        value: The result PRD should include non-functional requirements, such as performance, security, and usability
+        threshold: 0.7
+        weight: 1.5
+        metric: non-functional-requirements
+outputPath: trust-ai/results.html

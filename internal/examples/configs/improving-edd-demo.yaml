@@ -1,0 +1,59 @@
+description: Improving EDD demo – deterministic, rubric and script-based evals
+prompts:
+  - '@prompt-under-test.md {{request}}'
+defaultTest:
+  options:
+    provider: Devin SWE-1.6
+providers:
+  - id: 'exec: node ./devin.js'
+    label: Devin SWE-1.6
+    config:
+      model: SWE-1.6
+tests:
+  - description: JavaScript concepts - deterministic eval
+    vars:
+      request: What is the difference between let and const in JavaScript?
+    assert:
+      - type: contains
+        value: let
+      - type: contains
+        value: const
+      - type: contains
+        value: reassign
+  - description: Recursion explanation - rubric with per-dimension scoring
+    vars:
+      request: Explain the concept of recursion in programming
+    assert:
+      - type: llm-rubric
+        value: The response clearly defines what recursion is in plain language a non-expert could understand
+        threshold: 0.7
+        weight: 2
+        metric: clarity
+      - type: llm-rubric
+        value: The response includes at least one working code example that demonstrates recursion
+        threshold: 0.7
+        weight: 1.5
+        metric: code-example
+      - type: llm-rubric
+        value: The response explicitly explains both the base case (stopping condition) and the recursive case
+        threshold: 0.8
+        weight: 2
+        metric: base-case-explained
+      - type: llm-rubric
+        value: The response mentions stack overflow or call stack depth as a potential pitfall
+        threshold: 0.4
+        weight: 1
+        metric: mentions-risks
+  - description: Email validation - script-based eval
+    vars:
+      request: Output a function to validate an email address
+    assert:
+      - type: javascript
+        value: file://eval-script.js:hasCodeFormatting
+      - type: javascript
+        value: file://eval-script.js:explainsWhy
+      - type: javascript
+        value: file://eval-script.js:mentionsBestPractices
+  - file://fileBased.testSuite.yaml
+  - file://matchSchema.testSuite.yaml
+outputPath: results.html

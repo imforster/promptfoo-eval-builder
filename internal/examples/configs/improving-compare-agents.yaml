@@ -1,0 +1,57 @@
+description: Compare CLI coding agents side by side
+prompts:
+  - '@prompt-under-test.md {{request}}'
+defaultTest:
+  options:
+    provider: Claude Haiku
+  assert:
+    - type: javascript
+      value: file://eval-script.js:isConcise
+      metric: concise
+providers:
+  - id: 'exec: node ./claude.js'
+    label: Claude Haiku
+    config:
+      model: haiku
+  - id: 'exec: node ./gh_copilot.js'
+    label: GitHub Haiku
+    config:
+      model: claude-haiku-4.5
+  - id: 'exec: node ./devin.js'
+    label: Devin SWE-1.6
+    config:
+      model: SWE-1.6
+tests:
+  - description: Equality operators
+    vars:
+      request: Explain the difference between == and === in JavaScript
+    assert:
+      - type: javascript
+        value: file://eval-script.js:hasCodeFormatting
+      - type: javascript
+        value: file://eval-script.js:explainsWhy
+      - type: llm-rubric
+        value: The response explains that == performs type coercion and === does not
+        threshold: 0.7
+        weight: 2
+        metric: correctness
+  - description: Error handling best practices
+    vars:
+      request: What are the best practices for error handling in JavaScript?
+    assert:
+      - type: llm-rubric
+        value: The response covers try-catch-finally patterns and explains when to use each clause
+        threshold: 0.7
+        weight: 2
+        metric: try-catch-coverage
+      - type: llm-rubric
+        value: The response addresses error handling for async/await code
+        threshold: 0.6
+        weight: 1.5
+        metric: async-error-handling
+      - type: llm-rubric
+        value: The response gives concrete, actionable guidance a developer can apply immediately
+        threshold: 0.7
+        weight: 1.5
+        metric: actionability
+outputPath: results.html

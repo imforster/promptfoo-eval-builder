@@ -1,0 +1,44 @@
+description: Quick start – factual Q&A across two models
+prompts:
+  - 'Answer the following question concisely: {{question}}'
+  - label: step-by-step
+    raw: |-
+      You are a careful assistant. Think through the question, then give a one-sentence answer.
+      Question: {{question}}
+providers:
+  - openai:gpt-4.1-mini
+  - id: anthropic:messages:claude-haiku-4-5
+    label: claude-haiku
+    config:
+      temperature: 0
+defaultTest:
+  assert:
+    - type: not-is-refusal
+    - type: latency
+      threshold: 10000
+tests:
+  - description: Capital of France
+    vars:
+      question: What is the capital of France?
+    assert:
+      - type: icontains
+        value: Paris
+  - description: Largest planet
+    vars:
+      question: Which planet in our solar system is the largest?
+    assert:
+      - type: icontains
+        value: Jupiter
+      - type: llm-rubric
+        value: The answer is a single short sentence
+        metric: concise
+  - description: Boiling point, several phrasings
+    vars:
+      question:
+        - At what temperature does water boil at sea level, in Celsius?
+        - What is the boiling point of water in °C at 1 atm?
+    assert:
+      - type: contains-any
+        value:
+          - "100"
+          - one hundred

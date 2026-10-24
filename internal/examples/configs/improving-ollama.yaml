@@ -1,0 +1,33 @@
+description: Local model with Ollama – no cloud API keys
+prompts:
+  - '@prompt-under-test.md {{request}}'
+defaultTest:
+  options:
+    provider: Ollama Llama
+providers:
+  - id: 'exec: node ./ollama.js'
+    label: Ollama Llama
+    config:
+      host: localhost
+      port: 11434
+      model: llama3.1
+      documentRoot: ./
+tests:
+  - description: Python string reversal
+    vars:
+      request: How do I reverse a string in Python?
+    assert:
+      - type: icontains
+        value: python
+      - type: contains
+        value: '[::-1]'
+      - type: javascript
+        value: file://eval-script.js:hasCodeFormatting
+  - description: Recursion explanation
+    vars:
+      request: Explain the concept of recursion in programming
+    assert:
+      - type: llm-rubric
+        value: The response explicitly explains both the base case (stopping condition) and the recursive case
+        threshold: 0.7
+        metric: base-case-explained

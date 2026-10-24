@@ -1,0 +1,36 @@
+description: Structured JSON output – schema and code checks
+prompts:
+  - |-
+    Extract the contact details from the text below. Respond with JSON only, using the keys
+    "name", "email" and "company" (null when unknown).
+
+    Text: {{text}}
+providers:
+  - id: openai:gpt-4.1-mini
+    config:
+      temperature: 0
+      response_format:
+        type: json_object
+defaultTest:
+  assert:
+    - type: is-json
+      value: '{"type": "object", "required": ["name", "email", "company"], "properties": {"name": {"type": ["string", "null"]}, "email": {"type": ["string", "null"]}, "company": {"type": ["string", "null"]}}}'
+      metric: schema
+tests:
+  - description: All fields present
+    vars:
+      text: Hi, I'm Dana Reyes from Northwind Traders – reach me at dana.reyes@northwind.example.
+    assert:
+      - type: javascript
+        value: JSON.parse(output).email === 'dana.reyes@northwind.example'
+        metric: email
+      - type: javascript
+        value: JSON.parse(output).company?.includes('Northwind')
+        metric: company
+  - description: Missing company becomes null
+    vars:
+      text: Ping me at sam@example.com – Sam
+    assert:
+      - type: javascript
+        value: JSON.parse(output).company === null
+        metric: company
