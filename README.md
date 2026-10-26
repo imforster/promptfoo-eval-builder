@@ -48,6 +48,18 @@ A live YAML preview updates as you edit, and a checklist flags common mistakes (
 `latency` without a threshold, and so on). Open and save regular YAML files, so you can switch between the app and a
 text editor.
 
+## Ollama
+
+Configs that run on [Ollama](https://ollama.com), through promptfoo's `ollama:` providers or graders or the kit's
+`ollama.js`, need an Ollama server. The Run page checks the server the config points at (`OLLAMA_BASE_URL`, or the
+script's `host` and `port`) and says what's missing:
+
+- **Not installed**: install steps for macOS, Windows and Linux, starting with this computer's, with copyable commands.
+- **Installed but not running**: how to start the server.
+- **Model not downloaded**: a button that runs `ollama pull` for the config's models.
+
+**Run** stops with the same instructions instead of failing every test with a connection error or a 404.
+
 ## Value formats
 
 - List assertions (`contains-any`, `icontains-all`, …) take one value per line.
@@ -98,6 +110,7 @@ TOOLCHAIN_LIVE=1 go test -run TestInstallNodeLive ./internal/toolchain   # downl
 | `internal/evalconfig`   | Form model and conversion to and from promptfoo YAML              |
 | `internal/examples`     | Bundled example configs shown on the Examples page                |
 | `internal/kit`          | Downloads Improving's EDD kit files next to a config              |
+| `internal/ollama`       | Checks that the Ollama server and models a config uses are ready  |
 | `internal/promptfile`   | Finds and reads files a prompt refers to                          |
 | `internal/toolchain`    | Finds, or installs, Node.js and promptfoo                         |
 | `app.go`                | Methods bound to the frontend: file dialogs, save, run eval      |

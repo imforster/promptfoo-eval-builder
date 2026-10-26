@@ -20,6 +20,7 @@ import (
 	"promptfoo-eval-builder/internal/evalconfig"
 	"promptfoo-eval-builder/internal/examples"
 	"promptfoo-eval-builder/internal/kit"
+	"promptfoo-eval-builder/internal/ollama"
 	"promptfoo-eval-builder/internal/promptfile"
 	"promptfoo-eval-builder/internal/toolchain"
 )
@@ -268,6 +269,23 @@ func (a *App) InstallKit(path string) ([]string, error) {
 		return nil, fmt.Errorf("save the config first; the kit files go in its folder")
 	}
 	return kit.Install(a.ctx, filepath.Dir(path))
+}
+
+// OllamaStatus reports whether the config's Ollama server is installed, running
+// and has the models the config needs.
+func (a *App) OllamaStatus(c evalconfig.Config) ollama.Status {
+	<-a.pathReady
+	return ollama.Check(a.ctx, c)
+}
+
+// PullOllamaModel downloads a model with `ollama pull`, streaming output like RunEval.
+func (a *App) PullOllamaModel(model string) error {
+	<-a.pathReady
+	bin := ollama.FindBinary()
+	if bin == "" {
+		return fmt.Errorf("the ollama program wasn't found; install Ollama first")
+	}
+	return a.start("", bin, "pull", model)
 }
 
 // RunEval runs `promptfoo eval` on a saved config, streaming output as "eval:output"

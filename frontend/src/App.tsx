@@ -30,10 +30,12 @@ import {
   type Config,
   type Example,
   type KitStatus,
+  type OllamaStatus,
   type PromptFile,
   type ToolchainStatus,
   type TestCase,
 } from "./types";
+import { OllamaNotice, canPull, ollamaHelpText, ollamaReady } from "./ollama";
 import "./App.css";
 
 type Section = "examples" | "overview" | "prompts" | "providers" | "tests" | "defaults" | "advanced" | "run";
@@ -1037,7 +1039,52 @@ function useRunner(
       }
       if (!(await installKit(target))) return;
     }
-    await start((p) => api.runEval(p, noCache), target, toolchain === "installed");
+    // Without this, a missing Ollama shows up as a bare connection error or a 404 per test.
+    const ollama = await api.ollamaStatus(config).catch((e) => {
+      setLines((l) => [...l, `Couldn’t check Ollama: ${e}`]);
+      return null;
+    });
+    let keepLog = toolchain === "installed";
+    if (ollama && !ollamaReady(ollama)) {
+      setKitVersion((v) => v + 1);
+      if (!canPull(ollama)) {
+        setResult("");
+        setLines([ollamaHelpText(ollama)]);
+        return;
+      }
+      const ok = await api.confirm(
+        "Download the Ollama model?",
+        `This config uses ${ollama.missing.join(", ")}, which Ollama hasn’t downloaded yet. Models are several GB.\n\n` +
+          "Download now and then run the eval?",
+        "Download and run",
+      );
+      if (!ok) {
+        setLines([ollamaHelpText(ollama)]);
+        return;
+      }
+      if (!keepLog) setLines([]);
+      if (!(await pullOllamaModels(ollama.missing))) return;
+      keepLog = true;
+    }
+    await start((p) => api.runEval(p, noCache), target, keepLog);
+  };
+
+  // Pulls each model in turn, streaming progress to the log; returns false if one fails.
+  const pullOllamaModels = async (models: string[]): Promise<boolean> => {
+    setSetupBusy(true);
+    try {
+      for (const model of models) {
+        const err = await runAndWait(() => api.pullOllamaModel(model));
+        if (err) {
+          setLines((l) => [...l, `Could not download ${model}: ${err}`]);
+          return false;
+        }
+      }
+      return true;
+    } finally {
+      setSetupBusy(false);
+      setKitVersion((v) => v + 1);
+    }
   };
 
   const installDeps = () => start(api.installDeps);
@@ -1056,6 +1103,8 @@ function useRunner(
     setup,
     installNode,
     installPromptfoo,
+    pullOllamaModels,
+    refreshFolder: () => setKitVersion((v) => v + 1),
   };
 }
 
@@ -1076,8 +1125,12 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
     setup,
     installNode,
     installPromptfoo,
+    pullOllamaModels,
+    refreshFolder,
   } = props.runner;
   const [kit, setKit] = useState<KitStatus | null>(null);
+  const [ollama, setOllama] = useState<OllamaStatus | null>(null);
+  const [ollamaError, setOllamaError] = useState("");
   const [opening, setOpening] = useState(false);
   const logRef = useRef<HTMLPreElement>(null);
   const logFontSize = useFitFontSize(logRef, lines);
@@ -1088,6 +1141,19 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
       .then(setKit)
       .catch(() => setKit(null));
   }, [props.path, props.config, kitVersion]);
+
+  useEffect(() => {
+    api
+      .ollamaStatus(props.config)
+      .then((s) => {
+        setOllama(s);
+        setOllamaError("");
+      })
+      .catch((e) => {
+        setOllama(null);
+        setOllamaError(String(e));
+      });
+  }, [props.config, kitVersion]);
 
   useEffect(() => {
     logRef.current?.scrollTo(0, logRef.current.scrollHeight);
@@ -1196,6 +1262,20 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
             )}
           </div>
         </div>
+      )}
+      {ollamaError && (
+        <div className="notice warn">
+          <strong>Couldn’t check Ollama</strong>
+          <p>{ollamaError}</p>
+        </div>
+      )}
+      {ollama?.used && (
+        <OllamaNotice
+          status={ollama}
+          busy={running || kitBusy}
+          onCheck={refreshFolder}
+          onPull={(models) => pullOllamaModels(models)}
+        />
       )}
       <div className="run-actions">
         <button className="primary" onClick={runEval} disabled={running || kitBusy || props.hasErrors}>

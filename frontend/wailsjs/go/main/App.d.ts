@@ -3,6 +3,7 @@
 import {evalconfig} from '../models';
 import {kit} from '../models';
 import {examples} from '../models';
+import {ollama} from '../models';
 import {main} from '../models';
 import {promptfile} from '../models';
 import {toolchain} from '../models';
@@ -31,6 +32,8 @@ export function LoadExample(arg1:string):Promise<evalconfig.Config>;
 
 export function NewConfig():Promise<evalconfig.Config>;
 
+export function OllamaStatus(arg1:evalconfig.Config):Promise<ollama.Status>;
+
 export function OpenFile():Promise<main.OpenResult>;
 
 export function OpenInDefaultApp(arg1:string):Promise<void>;
@@ -38,6 +41,8 @@ export function OpenInDefaultApp(arg1:string):Promise<void>;
 export function PickPromptFile(arg1:string):Promise<string>;
 
 export function PromptFiles(arg1:string,arg2:string):Promise<Array<promptfile.File>>;
+
+export function PullOllamaModel(arg1:string):Promise<void>;
 
 export function RunEval(arg1:string,arg2:boolean):Promise<void>;
 

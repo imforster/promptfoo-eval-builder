@@ -37,6 +37,19 @@ export type ToolchainStatus = {
   dataDir: string;
 };
 
+export type OllamaStatus = {
+  used: boolean;
+  os: string;
+  baseURL: string;
+  remote: boolean;
+  installed: boolean;
+  binPath: string;
+  running: boolean;
+  models: string[];
+  missing: string[];
+  error: string;
+};
+
 export type Example = { id: string; title: string; summary: string; kit: boolean };
 
 export type KitStatus = {
