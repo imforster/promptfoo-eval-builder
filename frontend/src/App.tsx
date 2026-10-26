@@ -1040,7 +1040,10 @@ function useRunner(
       if (!(await installKit(target))) return;
     }
     // Without this, a missing Ollama shows up as a bare connection error or a 404 per test.
-    const ollama = await api.ollamaStatus(config).catch(() => null);
+    const ollama = await api.ollamaStatus(config).catch((e) => {
+      setLines((l) => [...l, `Couldn’t check Ollama: ${e}`]);
+      return null;
+    });
     let keepLog = toolchain === "installed";
     if (ollama && !ollamaReady(ollama)) {
       setKitVersion((v) => v + 1);
@@ -1127,6 +1130,7 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
   } = props.runner;
   const [kit, setKit] = useState<KitStatus | null>(null);
   const [ollama, setOllama] = useState<OllamaStatus | null>(null);
+  const [ollamaError, setOllamaError] = useState("");
   const [opening, setOpening] = useState(false);
   const logRef = useRef<HTMLPreElement>(null);
   const logFontSize = useFitFontSize(logRef, lines);
@@ -1141,8 +1145,14 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
   useEffect(() => {
     api
       .ollamaStatus(props.config)
-      .then(setOllama)
-      .catch(() => setOllama(null));
+      .then((s) => {
+        setOllama(s);
+        setOllamaError("");
+      })
+      .catch((e) => {
+        setOllama(null);
+        setOllamaError(String(e));
+      });
   }, [props.config, kitVersion]);
 
   useEffect(() => {
@@ -1251,6 +1261,12 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
               </button>
             )}
           </div>
+        </div>
+      )}
+      {ollamaError && (
+        <div className="notice warn">
+          <strong>Couldn’t check Ollama</strong>
+          <p>{ollamaError}</p>
         </div>
       )}
       {ollama?.used && (
