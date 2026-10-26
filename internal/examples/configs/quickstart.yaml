@@ -1,4 +1,4 @@
-description: Quick start – factual Q&A across two models
+description: Quick start – factual Q&A with Claude Code
 prompts:
   - 'Answer the following question concisely: {{question}}'
   - label: step-by-step
@@ -6,16 +6,17 @@ prompts:
       You are a careful assistant. Think through the question, then give a one-sentence answer.
       Question: {{question}}
 providers:
-  - openai:gpt-4.1-mini
-  - id: anthropic:messages:claude-haiku-4-5
-    label: claude-haiku
+  - id: 'exec: node ./claude.js'
+    label: Claude Haiku
     config:
-      temperature: 0
+      model: haiku
 defaultTest:
+  options:
+    provider: Claude Haiku
   assert:
     - type: not-is-refusal
     - type: latency
-      threshold: 10000
+      threshold: 60000
 tests:
   - description: Capital of France
     vars:
