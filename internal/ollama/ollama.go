@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"promptfoo-eval-builder/internal/evalconfig"
 )
 
@@ -49,38 +51,82 @@ type Status struct {
 func (s Status) Ready() bool { return !s.Used || (s.Running && len(s.Missing) == 0) }
 
 // Requirements finds the Ollama server and models a config uses, from native
-// ollama: providers and graders, and from the kit's ollama.js script.
+// ollama: providers and graders, and from the kit's ollama.js script. It reads
+// the whole generated YAML, so providers kept in the advanced section count too.
 func Requirements(c evalconfig.Config) (baseURL string, models []string) {
+	text, err := evalconfig.ToYAML(c)
+	if err != nil {
+		return "", nil
+	}
+	var doc struct {
+		Providers   any `yaml:"providers"`
+		DefaultTest any `yaml:"defaultTest"`
+		Tests       any `yaml:"tests"`
+	}
+	if err := yaml.Unmarshal([]byte(text), &doc); err != nil {
+		return "", nil
+	}
 	add := func(m string) {
 		if m != "" && !contains(models, m) {
 			models = append(models, m)
 		}
 	}
-	for _, p := range c.Providers {
-		if m, ok := nativeModel(p.ID); ok {
+	visit := func(provider any) {
+		id, cfg := providerParts(provider)
+		if m, ok := nativeModel(id); ok {
 			if baseURL == "" {
 				baseURL = nativeBaseURL()
 			}
 			add(m)
-			continue
-		}
-		if strings.Contains(p.ID, kitScript) {
-			cfg := kvMap(p.Config)
+		} else if strings.Contains(id, kitScript) {
 			if baseURL == "" {
 				baseURL = kitBaseURL(cfg["host"], cfg["port"])
 			}
 			add(orDefault(cfg["model"], kitDefaultModel))
 		}
 	}
-	for _, t := range append([]evalconfig.TestCase{c.DefaultTest}, c.Tests...) {
-		if m, ok := nativeModel(kvMap(t.Options)["provider"]); ok {
-			if baseURL == "" {
-				baseURL = nativeBaseURL()
+	for _, p := range asList(doc.Providers) {
+		visit(p)
+	}
+	for _, t := range append([]any{doc.DefaultTest}, asList(doc.Tests)...) {
+		if opts, ok := asMap(t)["options"]; ok {
+			if grader, ok := asMap(opts)["provider"]; ok {
+				visit(grader)
 			}
-			add(m)
 		}
 	}
 	return baseURL, models
+}
+
+// providerParts reads a provider written as an ID string or as a mapping with
+// id and config.
+func providerParts(p any) (string, map[string]string) {
+	if s, ok := p.(string); ok {
+		return strings.TrimSpace(s), nil
+	}
+	m := asMap(p)
+	id, _ := m["id"].(string)
+	cfg := map[string]string{}
+	for k, v := range asMap(m["config"]) {
+		cfg[k] = strings.TrimSpace(fmt.Sprint(v))
+	}
+	return strings.TrimSpace(id), cfg
+}
+
+func asList(v any) []any {
+	switch x := v.(type) {
+	case []any:
+		return x
+	case nil:
+		return nil
+	default:
+		return []any{x}
+	}
+}
+
+func asMap(v any) map[string]any {
+	m, _ := v.(map[string]any)
+	return m
 }
 
 // Check reports whether the config's Ollama server is installed, running and
@@ -226,14 +272,6 @@ func isLocal(baseURL string) bool {
 		return true
 	}
 	return false
-}
-
-func kvMap(kvs []evalconfig.KV) map[string]string {
-	m := map[string]string{}
-	for _, kv := range kvs {
-		m[kv.Key] = strings.TrimSpace(kv.Value)
-	}
-	return m
 }
 
 func orDefault(s, def string) string {

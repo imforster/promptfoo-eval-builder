@@ -62,6 +62,33 @@ func TestRequirements(t *testing.T) {
 	}
 }
 
+func TestRequirementsFindsProvidersInAdvancedYAML(t *testing.T) {
+	t.Setenv("OLLAMA_BASE_URL", "")
+	// delay isn't modeled by the form, so the providers list lands in Extra.
+	c, err := evalconfig.FromYAML(`providers:
+  - id: 'exec: node ./ollama.js'
+    label: Ollama Llama
+    delay: 500
+    config:
+      port: 11434
+      model: llama3.1
+defaultTest:
+  options:
+    provider:
+      id: ollama:chat:qwen2.5
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Providers) != 0 {
+		t.Fatalf("expected the providers to be kept as advanced YAML, got %+v", c.Providers)
+	}
+	url, models := Requirements(c)
+	if url != DefaultBaseURL || !reflect.DeepEqual(models, []string{"llama3.1", "qwen2.5"}) {
+		t.Fatalf("got %q %v", url, models)
+	}
+}
+
 func TestRequirementsUsesOllamaBaseURL(t *testing.T) {
 	t.Setenv("OLLAMA_BASE_URL", "http://127.0.0.1:9999/")
 	url, _ := Requirements(evalconfig.Config{Providers: []evalconfig.Provider{{ID: "ollama:chat:llama3.1"}}})
