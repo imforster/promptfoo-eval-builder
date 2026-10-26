@@ -3,12 +3,12 @@ prompts:
   - '@prompt-under-test.md {{request}}'
 defaultTest:
   options:
-    provider: Devin SWE-1.6
+    provider: Claude Haiku
 providers:
-  - id: 'exec: node ./devin.js'
-    label: Devin SWE-1.6
+  - id: 'exec: node ./claude.js'
+    label: Claude Haiku
     config:
-      model: SWE-1.6
+      model: haiku
 tests:
   - description: JavaScript concepts - deterministic eval
     vars:

@@ -23,17 +23,19 @@ var All = []Example{
 	{
 		ID:      "quickstart",
 		Title:   "Quick start: factual Q&A",
-		Summary: "Two prompts across OpenAI and Anthropic models, an array variable, text checks, a rubric, and latency and refusal checks for every test.",
+		Summary: "Two prompts through Claude Code, an array variable, text checks, a rubric, and latency and refusal checks for every test.",
+		Kit:     true,
 	},
 	{
 		ID:      "json-output",
 		Title:   "Structured JSON output",
 		Summary: "Validates extracted data against a JSON schema and checks fields with inline JavaScript assertions.",
+		Kit:     true,
 	},
 	{
 		ID:      "improving-edd-demo",
-		Title:   "Improving EDD demo (Devin CLI)",
-		Summary: "Improving's Evaluation Driven Development demo: deterministic, per-dimension rubric and script-based evals, plus file-based test suites and JSON schema matching. Devin grades the rubrics.",
+		Title:   "Improving EDD demo (Claude Code)",
+		Summary: "Improving's Evaluation Driven Development demo: deterministic, per-dimension rubric and script-based evals, plus file-based test suites and JSON schema matching. Claude Haiku grades the rubrics.",
 		Kit:     true,
 	},
 	{

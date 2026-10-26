@@ -53,7 +53,7 @@ export default function App() {
   const [config, setConfig] = useState<Config | null>(null);
   const [path, setPath] = useState("");
   const [dirty, setDirty] = useState(false);
-  const [section, setSection] = useState<Section>("overview");
+  const [section, setSection] = useState<Section>("examples");
   const [yaml, setYaml] = useState("");
   const [yamlError, setYamlError] = useState("");
   const [status, setStatus] = useState("");
@@ -308,30 +308,32 @@ function Examples({ onLoad }: { onLoad: (ex: Example) => void }) {
         Ready-made configs that show what the builder can do. Loading one replaces the current config; save it to a
         folder to run it.
       </p>
-      {groups.map((g) => (
-        <div key={g.title}>
-          <h3>{g.title}</h3>
-          {g.kit && (
-            <p className="muted">
-              These use <ExternalLink href={KIT_REPO}>Improving’s promptfoo EDD kit</ExternalLink>: Node scripts that
-              drive Devin, Claude Code, GitHub Copilot, Antigravity, Kiro or Ollama as providers and graders. After you
-              save, the Run page downloads the scripts into the config’s folder. You need the matching CLI installed and
-              signed in.
-            </p>
-          )}
-          <div className="example-grid">
-            {examples
-              .filter((ex) => ex.kit === g.kit)
-              .map((ex) => (
-                <div className="card example" key={ex.id}>
-                  <strong>{ex.title}</strong>
-                  <p>{ex.summary}</p>
-                  <button onClick={() => onLoad(ex)}>Load example</button>
-                </div>
-              ))}
+      {groups
+        .filter((g) => examples.some((ex) => ex.kit === g.kit))
+        .map((g) => (
+          <div key={g.title}>
+            <h3>{g.title}</h3>
+            {g.kit && (
+              <p className="muted">
+                These use <ExternalLink href={KIT_REPO}>Improving’s promptfoo EDD kit</ExternalLink>: Node scripts that
+                drive Devin, Claude Code, GitHub Copilot, Antigravity, Kiro or Ollama as providers and graders. After
+                you save, the Run page downloads the scripts into the config’s folder. You need the matching CLI
+                installed and signed in.
+              </p>
+            )}
+            <div className="example-grid">
+              {examples
+                .filter((ex) => ex.kit === g.kit)
+                .map((ex) => (
+                  <div className="card example" key={ex.id}>
+                    <strong>{ex.title}</strong>
+                    <p>{ex.summary}</p>
+                    <button onClick={() => onLoad(ex)}>Load example</button>
+                  </div>
+                ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </section>
   );
 }
