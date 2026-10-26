@@ -275,6 +275,41 @@ export namespace main {
 
 }
 
+export namespace ollama {
+	
+	export class Status {
+	    used: boolean;
+	    os: string;
+	    baseURL: string;
+	    remote: boolean;
+	    installed: boolean;
+	    binPath: string;
+	    running: boolean;
+	    models: string[];
+	    missing: string[];
+	    error: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Status(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.used = source["used"];
+	        this.os = source["os"];
+	        this.baseURL = source["baseURL"];
+	        this.remote = source["remote"];
+	        this.installed = source["installed"];
+	        this.binPath = source["binPath"];
+	        this.running = source["running"];
+	        this.models = source["models"];
+	        this.missing = source["missing"];
+	        this.error = source["error"];
+	    }
+	}
+
+}
+
 export namespace promptfile {
 	
 	export class File {

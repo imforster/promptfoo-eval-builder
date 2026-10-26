@@ -50,6 +50,10 @@ export function NewConfig() {
   return window['go']['main']['App']['NewConfig']();
 }
 
+export function OllamaStatus(arg1) {
+  return window['go']['main']['App']['OllamaStatus'](arg1);
+}
+
 export function OpenFile() {
   return window['go']['main']['App']['OpenFile']();
 }
@@ -64,6 +68,10 @@ export function PickPromptFile(arg1) {
 
 export function PromptFiles(arg1, arg2) {
   return window['go']['main']['App']['PromptFiles'](arg1, arg2);
+}
+
+export function PullOllamaModel(arg1) {
+  return window['go']['main']['App']['PullOllamaModel'](arg1);
 }
 
 export function RunEval(arg1, arg2) {
