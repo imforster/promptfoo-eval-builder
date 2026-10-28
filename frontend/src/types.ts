@@ -50,6 +50,13 @@ export type OllamaStatus = {
   error: string;
 };
 
+export type AgentCLIStatus = {
+  name: string;
+  command: string;
+  path: string;
+  problem: "" | "not-found" | "installer-stub";
+};
+
 export type Example = { id: string; title: string; summary: string; kit: boolean };
 
 export type KitStatus = {
