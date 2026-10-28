@@ -1,3 +1,26 @@
+export namespace agentcli {
+	
+	export class Status {
+	    name: string;
+	    command: string;
+	    path: string;
+	    problem: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Status(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.command = source["command"];
+	        this.path = source["path"];
+	        this.problem = source["problem"];
+	    }
+	}
+
+}
+
 export namespace evalconfig {
 	
 	export class KV {

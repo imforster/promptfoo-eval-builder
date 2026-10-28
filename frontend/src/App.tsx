@@ -27,6 +27,7 @@ import {
   getOption,
   promptVars,
   setOption,
+  type AgentCLIStatus,
   type Config,
   type Example,
   type KitStatus,
@@ -36,6 +37,7 @@ import {
   type TestCase,
 } from "./types";
 import { OllamaNotice, canPull, ollamaHelpText, ollamaReady } from "./ollama";
+import { AgentCLINotice, cliHelpText, cliProblems } from "./agentcli";
 import "./App.css";
 
 type Section = "examples" | "overview" | "prompts" | "providers" | "tests" | "defaults" | "advanced" | "run";
@@ -1039,6 +1041,21 @@ function useRunner(
       }
       if (!(await installKit(target))) return;
     }
+    // A missing CLI agent fails every test that uses it, so ask before running.
+    const agents = cliProblems(await api.agentCliStatus(config).catch(() => []));
+    if (agents.length > 0) {
+      const ok = await api.confirm(
+        "CLI agents aren’t ready",
+        `${agents.map((a) => a.name).join(", ")} ${agents.length > 1 ? "aren’t" : "isn’t"} installed, so tests that use ` +
+          `${agents.length > 1 ? "them" : "it"} will fail.\n\nRun anyway?`,
+        "Run anyway",
+      );
+      if (!ok) {
+        setResult("");
+        setLines([cliHelpText(agents)]);
+        return;
+      }
+    }
     // Without this, a missing Ollama shows up as a bare connection error or a 404 per test.
     const ollama = await api.ollamaStatus(config).catch((e) => {
       setLines((l) => [...l, `Couldn’t check Ollama: ${e}`]);
@@ -1131,6 +1148,7 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
   const [kit, setKit] = useState<KitStatus | null>(null);
   const [ollama, setOllama] = useState<OllamaStatus | null>(null);
   const [ollamaError, setOllamaError] = useState("");
+  const [agentProblems, setAgentProblems] = useState<AgentCLIStatus[]>([]);
   const [opening, setOpening] = useState(false);
   const logRef = useRef<HTMLPreElement>(null);
   const logFontSize = useFitFontSize(logRef, lines);
@@ -1153,6 +1171,13 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
         setOllama(null);
         setOllamaError(String(e));
       });
+  }, [props.config, kitVersion]);
+
+  useEffect(() => {
+    api
+      .agentCliStatus(props.config)
+      .then((s) => setAgentProblems(cliProblems(s)))
+      .catch(() => setAgentProblems([]));
   }, [props.config, kitVersion]);
 
   useEffect(() => {
@@ -1263,6 +1288,7 @@ function Run(props: { config: Config; path: string; dirty: boolean; hasErrors: b
           </div>
         </div>
       )}
+      {agentProblems.length > 0 && <AgentCLINotice problems={agentProblems} onCheck={refreshFolder} />}
       {ollamaError && (
         <div className="notice warn">
           <strong>Couldn’t check Ollama</strong>

@@ -1,6 +1,6 @@
 import * as App from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
-import type { Config, Example, KitStatus, OllamaStatus, PromptFile, ToolchainStatus } from "./types";
+import type { AgentCLIStatus, Config, Example, KitStatus, OllamaStatus, PromptFile, ToolchainStatus } from "./types";
 
 // The generated bindings use classes; our plain objects are structurally identical.
 type AnyConfig = Parameters<typeof App.ToYAML>[0];
@@ -26,6 +26,7 @@ export const api = {
   kitStatus: (path: string, c: Config) => App.KitStatus(path, toGo(c)) as Promise<KitStatus>,
   installKit: (path: string) => App.InstallKit(path),
   installDeps: (path: string) => App.InstallDeps(path),
+  agentCliStatus: (c: Config) => App.AgentCLIStatus(toGo(c)) as Promise<AgentCLIStatus[]>,
   ollamaStatus: (c: Config) => App.OllamaStatus(toGo(c)) as Promise<OllamaStatus>,
   pullOllamaModel: (model: string) => App.PullOllamaModel(model),
   runEval: (path: string, noCache: boolean) => App.RunEval(path, noCache),

@@ -17,6 +17,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"promptfoo-eval-builder/internal/agentcli"
 	"promptfoo-eval-builder/internal/evalconfig"
 	"promptfoo-eval-builder/internal/examples"
 	"promptfoo-eval-builder/internal/kit"
@@ -269,6 +270,13 @@ func (a *App) InstallKit(path string) ([]string, error) {
 		return nil, fmt.Errorf("save the config first; the kit files go in its folder")
 	}
 	return kit.Install(a.ctx, filepath.Dir(path))
+}
+
+// AgentCLIStatus reports whether the coding-agent CLIs the config's kit scripts
+// drive are installed.
+func (a *App) AgentCLIStatus(c evalconfig.Config) []agentcli.Status {
+	<-a.pathReady
+	return agentcli.Check(a.ctx, c)
 }
 
 // OllamaStatus reports whether the config's Ollama server is installed, running

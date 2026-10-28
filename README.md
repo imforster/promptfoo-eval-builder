@@ -76,7 +76,30 @@ Configs that use features the form doesn't model (for example `tests: file://tes
 - Node.js 20.19 or later for the frontend build (Vite 7). The built app finds or installs its own Node.js for running promptfoo
 - Wails CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
 - Platform dependencies, which `wails doctor` reports. On Ubuntu 24.04:
-  `sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev`
+  `sudo apt install libgtk-3-dev libwebkit2gtk-4.1-dev`. On Windows, see [Windows](#windows).
+
+## Windows
+
+The `Makefile` needs a POSIX shell, so on Windows run the `wails` and `go` commands below directly.
+
+```powershell
+winget install -e --id GoLang.Go
+winget install -e --id OpenJS.NodeJS.LTS
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+Open a new terminal afterwards so `PATH` picks up the installs, and add `%USERPROFILE%\go\bin` to `PATH` if `wails`
+is not found. Then run `wails doctor`. It also checks for WebView2, which Windows 11 includes. Restart the app
+after changing `PATH`, because it only reads `PATH` at startup.
+
+**GitHub Copilot CLI provider.** The `copilot` command that VS Code puts on `PATH`
+(`...\Microsoft VS Code\bin\copilot-shim\copilot.exe`) is only an installer prompt, so every test fails with
+`GitHub Copilot CLI was not found`. Install the real CLI and sign in:
+
+```powershell
+winget install -e --id GitHub.Copilot
+copilot        # then /login
+```
 
 ## Development
 
